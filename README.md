@@ -2,3 +2,5 @@
 
 
 ![http://threevirtues.com/](http://i.giphy.com/g7EAf1UAemlag.gif)
+
+Installation:
