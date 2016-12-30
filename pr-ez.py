@@ -8,16 +8,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 
-
 def getConfigData(configFile):
     r = re.compile("\: (.*)")
-    config = [r.search(config.rstrip('\n')).group(1) for config in open(configFile)]
-    print 'yo2'
-    if None in config:
-        print '\n\nYou need to completely fill out config.txt for this to be ez :(\n\n'
-        sys.exit()
-    else:
-        return config
+    config = []
+    with open(configFile) as f:
+        for line in f:
+            result = r.search(line)
+            if result:
+                config.append(result.group(1))
+            else:
+                print '\n\nYou need to completely fill out config.txt for this to be ez :(\n\n'
+                sys.exit()
+    return config
 
 def loginToGithub (u, p, driver):
     driver.get('https://github.com/login')
@@ -35,19 +37,24 @@ def openNewPr(driver, githubRepo, assignees, branch):
     driver.find_elements_by_xpath("//*[contains(@id, 'commitish-filter-field')]")[1].send_keys(branch)
     driver.find_elements_by_xpath("//div[contains(text(), {0})]".format(branch))[1].click()
     for dev in assignees:
+        print dev
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, '.sidebar-assignee'))
+        )
         driver.find_elements_by_class_name('.sidebar-assignee')[1].click()
+        print 'ok were here'
         driver.find_element_by_id('assignee-filter-field').send_keys(dev)
         driver.find_element_by_class_name('.navigation-focus').send_keys(Keys.RETURN)
 
 def browserStuff(driver, gitCredentials, branch, configData):
     githubRepo = configData[0]
     assignees = configData[1].split(', ')
+    print assignees
     try:
         loginToGithub(gitCredentials[0], gitCredentials[1], driver)
         openNewPr(driver, githubRepo, assignees, branch)
     except Exception as e:
         print 'Exception: ' + e.message
-
 
 def main():
     config = getConfigData('config.txt')
